@@ -13,4 +13,4 @@ services:
       - "8080:8080"
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_PROXY_BASE=https://didactic-space-computing-machine-x564v6qwg5j6f6wqq-5000.app.github.dev
+      - NEXT_PUBLIC_PROXY_BASE=
