@@ -172,92 +172,121 @@ export default function Home() {
         {tab === "dashboard" && (
           <div className="dashboard">
 
-            {/* Stats row */}
-            <div className="stats-row">
-              <div className="stat-card">
-                <div className="stat-label">Total Requests</div>
-                <div className="stat-value">{metrics.total_requests.toLocaleString()}</div>
-                <div className="stat-sub">all time</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Success Rate</div>
-                <div className="stat-value" style={{ color: srColor }}>{metrics.success_rate}<span className="stat-unit">%</span></div>
-                <div className="stat-sub">{metrics.errors} error{metrics.errors !== 1 ? "s" : ""}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Avg Latency</div>
-                <div className="stat-value">{metrics.avg_latency_ms}<span className="stat-unit"> ms</span></div>
-                <div className="stat-sub">proxy overhead</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Providers</div>
-                <div className="stat-value" style={{ color: connectedCount > 0 ? "#00E5A0" : "#888" }}>
-                  {connectedCount}<span className="stat-unit"> / 4</span>
-                </div>
-                <div className="stat-sub">connected</div>
-              </div>
-            </div>
+            {connectedCount === 0 ? (
 
-            {/* Provider status pills */}
-            <div className="provider-strip">
-              {PROVIDERS.map(p => (
-                <div key={p.id} className={`provider-pill ${connected[p.id] ? "pill-on" : "pill-off"}`}>
-                  <span className="pill-dot" style={{ background: connected[p.id] ? p.color : "#3a3a3a" }} />
-                  <span className="pill-icon">{p.icon}</span>
-                  {p.name}
-                  {connected[p.id] && <span className="pill-status">routing</span>}
+              /* ── Empty / not connected ── */
+              <div className="empty-dashboard">
+                <div className="empty-ghost">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 10h.01M15 10h.01M12 2C6.48 2 2 6.48 2 12v9l3-3 2 2 2-2 2 2 2-2 2 2 3 3v-9c0-5.52-4.48-10-10-10z"/>
+                  </svg>
                 </div>
-              ))}
-            </div>
-
-            {/* Request log */}
-            <div className="log-panel">
-              <div className="panel-header">
-                <span className="panel-title">Request Log</span>
-                <span className="panel-count">{reqLogs.length} entries</span>
-                <span className="live-badge">
-                  <span className="live-dot" />
-                  LIVE
-                </span>
+                <h2 className="empty-heading">No services connected</h2>
+                <p className="empty-desc">Connect at least one AI provider to start routing requests and see live metrics here.</p>
+                <button className="btn-cta" onClick={() => setTab("settings")}>Connect a provider →</button>
               </div>
 
-              {reqLogs.length === 0 ? (
-                <div className="log-empty">
-                  <div className="empty-icon"><ActivityIcon /></div>
-                  <p className="empty-title">No requests yet</p>
-                  <p className="empty-sub">Traffic routed through this proxy will appear here in real time.</p>
+            ) : (
+
+              /* ── Internal dashboard (connected) ── */
+              <>
+                {/* Connected services */}
+                <div className="section-row">
+                  <span className="section-label">Connected services</span>
+                  <button className="link-btn" onClick={() => setTab("settings")}>+ Manage</button>
                 </div>
-              ) : (
-                <div className="table-wrap">
-                  <table className="log-table">
-                    <thead>
-                      <tr>
-                        <th>Time</th>
-                        <th>Method</th>
-                        <th>Path</th>
-                        <th>Status</th>
-                        <th>Latency</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reqLogs.map((log, i) => (
-                        <tr key={i}>
-                          <td className="col-time">{timeAgo(log.time)}</td>
-                          <td><span className={`method-badge method-${log.method.toLowerCase()}`}>{log.method}</span></td>
-                          <td className="col-path">{log.path}</td>
-                          <td>
-                            <span className={`status-badge ${log.status < 300 ? "s-ok" : log.status < 500 ? "s-warn" : "s-err"}`}>
-                              {log.status}
-                            </span>
-                          </td>
-                          <td className="col-latency">{log.latency_ms} ms</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="service-cards">
+                  {PROVIDERS.filter(p => connected[p.id]).map(p => (
+                    <div key={p.id} className="service-card" style={{ "--accent": p.color }}>
+                      <div className="sc-header">
+                        <div className={`sc-icon ${p.iconClass}`}>{p.icon}</div>
+                        <div>
+                          <div className="sc-name">{p.name}</div>
+                          <div className="sc-sub">{p.sub}</div>
+                        </div>
+                        <span className="sc-badge">
+                          <span className="sc-dot" style={{ background: p.color }} />
+                          routing
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+
+                {/* Stats row */}
+                <div className="stats-row">
+                  <div className="stat-card">
+                    <div className="stat-label">Total Requests</div>
+                    <div className="stat-value">{metrics.total_requests.toLocaleString()}</div>
+                    <div className="stat-sub">all time</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">Success Rate</div>
+                    <div className="stat-value" style={{ color: srColor }}>{metrics.success_rate}<span className="stat-unit">%</span></div>
+                    <div className="stat-sub">{metrics.errors} error{metrics.errors !== 1 ? "s" : ""}</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">Avg Latency</div>
+                    <div className="stat-value">{metrics.avg_latency_ms}<span className="stat-unit"> ms</span></div>
+                    <div className="stat-sub">proxy overhead</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-label">Proxy</div>
+                    <div className="stat-value" style={{ fontSize: 16, paddingTop: 4, color: statusColor, textTransform: "capitalize" }}>{proxyStatus}</div>
+                    <div className="stat-sub">{connectedCount} provider{connectedCount !== 1 ? "s" : ""} active</div>
+                  </div>
+                </div>
+
+                {/* Request log */}
+                <div className="log-panel">
+                  <div className="panel-header">
+                    <span className="panel-title">Request Log</span>
+                    <span className="panel-count">{reqLogs.length} entries</span>
+                    <span className="live-badge">
+                      <span className="live-dot" />
+                      LIVE
+                    </span>
+                  </div>
+
+                  {reqLogs.length === 0 ? (
+                    <div className="log-empty">
+                      <div className="empty-icon"><ActivityIcon /></div>
+                      <p className="empty-title">No requests yet</p>
+                      <p className="empty-sub">Traffic routed through this proxy will appear here in real time.</p>
+                    </div>
+                  ) : (
+                    <div className="table-wrap">
+                      <table className="log-table">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>Method</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                            <th>Latency</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reqLogs.map((log, i) => (
+                            <tr key={i}>
+                              <td className="col-time">{timeAgo(log.time)}</td>
+                              <td><span className={`method-badge method-${log.method.toLowerCase()}`}>{log.method}</span></td>
+                              <td className="col-path">{log.path}</td>
+                              <td>
+                                <span className={`status-badge ${log.status < 300 ? "s-ok" : log.status < 500 ? "s-warn" : "s-err"}`}>
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td className="col-latency">{log.latency_ms} ms</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -432,6 +461,119 @@ export default function Home() {
           display: flex;
           flex-direction: column;
           gap: 20px;
+        }
+
+        /* Empty dashboard */
+        .empty-dashboard {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 400px;
+          gap: 14px;
+          text-align: center;
+        }
+        .empty-ghost {
+          opacity: 0.15;
+          margin-bottom: 8px;
+        }
+        .empty-heading {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 700;
+          opacity: 0.7;
+        }
+        .empty-desc {
+          margin: 0;
+          font-size: 13px;
+          opacity: 0.35;
+          max-width: 320px;
+          line-height: 1.6;
+        }
+        .btn-cta {
+          margin-top: 8px;
+          padding: 10px 22px;
+          background: rgba(255,255,255,.06);
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 10px;
+          color: #E6E6E6;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background .15s, border-color .15s;
+        }
+        .btn-cta:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); }
+
+        /* Section row */
+        .section-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .section-label {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: .7px;
+          opacity: 0.35;
+        }
+        .link-btn {
+          background: none;
+          border: none;
+          color: #E6E6E6;
+          font-size: 12px;
+          opacity: 0.35;
+          cursor: pointer;
+          padding: 0;
+          transition: opacity .15s;
+        }
+        .link-btn:hover { opacity: 0.7; }
+
+        /* Connected service cards */
+        .service-cards {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        .service-card {
+          background: #13161C;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 14px;
+          padding: 16px 20px;
+          min-width: 200px;
+          flex: 1;
+          border-top: 2px solid var(--accent);
+        }
+        .sc-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .sc-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 9px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .sc-name { font-size: 14px; font-weight: 700; }
+        .sc-sub  { font-size: 10px; opacity: 0.35; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+        .sc-badge {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 10px;
+          font-weight: 600;
+          opacity: 0.7;
+        }
+        .sc-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          animation: pulse 2s ease-in-out infinite;
         }
 
         /* Stats row */
