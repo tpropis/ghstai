@@ -5,12 +5,15 @@ export default function Home() {
   const [chatgptKey, setChatgptKey] = useState("");
   const [claudeKey, setClaudeKey] = useState("");
   const [grokKey, setGrokKey] = useState("");
+  const [geminiKey, setGeminiKey] = useState("");
   const [chatgptConnected, setChatgptConnected] = useState(false);
   const [claudeConnected, setClaudeConnected] = useState(false);
   const [grokConnected, setGrokConnected] = useState(false);
+  const [geminiConnected, setGeminiConnected] = useState(false);
   const [chatgptError, setChatgptError] = useState("");
   const [claudeError, setClaudeError] = useState("");
   const [grokError, setGrokError] = useState("");
+  const [geminiError, setGeminiError] = useState("");
 
   useEffect(() => {
     const check = () => {
@@ -43,6 +46,13 @@ export default function Home() {
     if (!grokKey.startsWith("xai-")) { setGrokError("Invalid key — should start with xai-"); return; }
     setGrokError("");
     setGrokConnected(true);
+  };
+
+  const connectGemini = () => {
+    if (!geminiKey.trim()) { setGeminiError("Please enter your API key"); return; }
+    if (!geminiKey.startsWith("AIza")) { setGeminiError("Invalid key — should start with AIza"); return; }
+    setGeminiError("");
+    setGeminiConnected(true);
   };
 
   const dot = { online: "#00E5A0", degraded: "#F5A623", offline: "#FF4D4D", checking: "#888" }[proxyStatus];
@@ -189,6 +199,48 @@ export default function Home() {
           )}
         </div>
 
+        {/* Gemini */}
+        <div className={`card ${geminiConnected ? "card-connected" : ""}`}>
+          <div className="card-brand">
+            <div className="brand-icon gemini-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+                <path d="M12 .5C5.65.5.5 5.65.5 12S5.65 23.5 12 23.5 23.5 18.35 23.5 12 18.35.5 12 .5zm0 4c.55 0 1 .45 1 1v5l4.33 2.5c.48.28.64.89.36 1.37-.28.48-.89.64-1.37.36L11 12.27V5.5c0-.55.45-1 1-1z"/>
+              </svg>
+            </div>
+            <div>
+              <div className="brand-name">Gemini</div>
+              <div className="brand-sub">Google AI</div>
+            </div>
+            {geminiConnected && <span className="connected-badge">Connected</span>}
+          </div>
+
+          {!geminiConnected ? (
+            <>
+              <p className="card-desc">Route Google Gemini requests through GHST AI using your API key.</p>
+              <input
+                className="key-input"
+                type="password"
+                placeholder="AIza..."
+                value={geminiKey}
+                onChange={e => { setGeminiKey(e.target.value); setGeminiError(""); }}
+                onKeyDown={e => e.key === "Enter" && connectGemini()}
+              />
+              {geminiError && <p className="error-msg">{geminiError}</p>}
+              <button className="btn btn-gemini" onClick={connectGemini}>Connect Gemini</button>
+              <a className="help-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">
+                Get your API key →
+              </a>
+            </>
+          ) : (
+            <div className="connected-state">
+              <div className="connected-icon">✓</div>
+              <p>Gemini is connected and routing through GHST AI.</p>
+              <button className="btn-ghost" onClick={() => { setGeminiConnected(false); setGeminiKey(""); }}>Disconnect</button>
+            </div>
+          )}
+        </div>
+
       </div>
 
       <style jsx>{`
@@ -238,12 +290,11 @@ export default function Home() {
           padding: 56px 0 56px;
         }
         .hero-logo {
-          height: 90px;
+          height: 160px;
           width: auto;
           object-fit: contain;
           filter: invert(1);
-          margin-bottom: 24px;
-          drop-shadow: 0 0 40px rgba(255,255,255,.08);
+          margin-bottom: 28px;
         }
         .hero-sub {
           margin: 0;
@@ -253,13 +304,13 @@ export default function Home() {
           line-height: 1.6;
         }
 
-        /* Cards grid — 3 columns */
+        /* Cards grid — 2x2 */
         .cards {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: 18px;
           width: 100%;
-          max-width: 960px;
+          max-width: 860px;
         }
 
         .card {
@@ -294,9 +345,10 @@ export default function Home() {
           justify-content: center;
           flex-shrink: 0;
         }
-        .openai-icon { background: rgba(16,163,127,.15); color: #10A37F; }
-        .claude-icon  { background: rgba(217,117,89,.15); color: #D97559; }
+        .openai-icon  { background: rgba(16,163,127,.15);  color: #10A37F; }
+        .claude-icon  { background: rgba(217,117,89,.15);  color: #D97559; }
         .grok-icon    { background: rgba(138,99,255,.15);  color: #8A63FF; }
+        .gemini-icon  { background: rgba(66,133,244,.15);  color: #4285F4; }
 
         .brand-name { font-size: 16px; font-weight: 700; }
         .brand-sub  { font-size: 11px; opacity: 0.38; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
@@ -353,9 +405,10 @@ export default function Home() {
         }
         .btn:hover { opacity: 0.88; transform: translateY(-1px); }
         .btn:active { transform: translateY(0); }
-        .btn-openai { background: #10A37F; color: #fff; }
-        .btn-claude { background: #D97559; color: #fff; }
-        .btn-grok   { background: #8A63FF; color: #fff; }
+        .btn-openai  { background: #10A37F; color: #fff; }
+        .btn-claude  { background: #D97559; color: #fff; }
+        .btn-grok    { background: #8A63FF; color: #fff; }
+        .btn-gemini  { background: #4285F4; color: #fff; }
 
         .help-link {
           font-size: 12px;
@@ -400,14 +453,9 @@ export default function Home() {
         }
         .btn-ghost:hover { opacity: 0.75; }
 
-        @media (max-width: 860px) {
-          .cards { grid-template-columns: 1fr 1fr; }
-          .card-grok { grid-column: 1 / -1; max-width: 420px; margin: 0 auto; width: 100%; }
-        }
         @media (max-width: 560px) {
           .cards { grid-template-columns: 1fr; }
-          .card-grok { grid-column: auto; max-width: none; }
-          .hero-logo { height: 64px; }
+          .hero-logo { height: 110px; }
         }
       `}</style>
     </div>
