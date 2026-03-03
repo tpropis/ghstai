@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 
-const NAV = ["Dashboard", "Services", "Logs", "Settings"];
-
 export default function Home() {
   const [proxyStatus, setProxyStatus] = useState("checking");
-  const [activeNav, setActiveNav] = useState("Dashboard");
-  const [uptime, setUptime] = useState(0);
+  const [chatgptKey, setChatgptKey] = useState("");
+  const [claudeKey, setClaudeKey] = useState("");
+  const [chatgptConnected, setChatgptConnected] = useState(false);
+  const [claudeConnected, setClaudeConnected] = useState(false);
+  const [chatgptError, setChatgptError] = useState("");
+  const [claudeError, setClaudeError] = useState("");
 
   useEffect(() => {
     const check = () => {
@@ -19,211 +21,332 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const t = setInterval(() => setUptime(s => s + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const formatUptime = (s) => {
-    const h = String(Math.floor(s / 3600)).padStart(2, "0");
-    const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-    const sec = String(s % 60).padStart(2, "0");
-    return `${h}:${m}:${sec}`;
+  const connectChatGPT = () => {
+    if (!chatgptKey.trim()) { setChatgptError("Please enter your API key"); return; }
+    if (!chatgptKey.startsWith("sk-")) { setChatgptError("Invalid key — should start with sk-"); return; }
+    setChatgptError("");
+    setChatgptConnected(true);
   };
 
-  const statusColor = { online: "#00E5A0", degraded: "#F5A623", offline: "#FF4D4D", checking: "#888" };
-  const dot = statusColor[proxyStatus] || "#888";
+  const connectClaude = () => {
+    if (!claudeKey.trim()) { setClaudeError("Please enter your API key"); return; }
+    if (!claudeKey.startsWith("sk-ant-")) { setClaudeError("Invalid key — should start with sk-ant-"); return; }
+    setClaudeError("");
+    setClaudeConnected(true);
+  };
 
-  const services = [
-    { name: "Proxy API",    port: 5000, status: proxyStatus, type: "FastAPI"  },
-    { name: "Dashboard",   port: 8080, status: "online",     type: "Next.js"  },
-  ];
+  const dot = { online: "#00E5A0", degraded: "#F5A623", offline: "#FF4D4D", checking: "#888" }[proxyStatus];
 
   return (
-    <div className="container">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="logo-wrap">
-          <img src="/logo.png" alt="GHST AI" className="logo-img" />
-          <span className="logo-text">GHST <span className="logo-accent">AI</span></span>
+    <div className="page">
+      {/* Header */}
+      <header className="header">
+        <img src="/logo.png" alt="GHST AI" className="logo" />
+        <div className="status-chip">
+          <span className="status-dot" style={{ background: dot }} />
+          System {proxyStatus}
+        </div>
+      </header>
+
+      {/* Hero */}
+      <div className="hero">
+        <h1 className="hero-title">Connect Your AI</h1>
+        <p className="hero-sub">Link your API keys to start routing requests through GHST AI</p>
+      </div>
+
+      {/* Connect Cards */}
+      <div className="cards">
+        {/* ChatGPT */}
+        <div className={`card ${chatgptConnected ? "card-connected" : ""}`}>
+          <div className="card-brand">
+            <div className="brand-icon openai-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.28 9.28a5.76 5.76 0 0 0-.49-4.73 5.82 5.82 0 0 0-6.27-2.8A5.76 5.76 0 0 0 11.2 0a5.82 5.82 0 0 0-5.55 4.03 5.76 5.76 0 0 0-3.84 2.8 5.82 5.82 0 0 0 .72 6.82 5.76 5.76 0 0 0 .49 4.73 5.82 5.82 0 0 0 6.27 2.8A5.76 5.76 0 0 0 12.8 24a5.82 5.82 0 0 0 5.55-4.04 5.76 5.76 0 0 0 3.84-2.79 5.82 5.82 0 0 0-.71-6.89zM12.8 22.4a4.32 4.32 0 0 1-2.77-1c.03-.02.09-.05.13-.08l4.6-2.66a.76.76 0 0 0 .38-.66v-6.5l1.95 1.12a.07.07 0 0 1 .04.05v5.38A4.34 4.34 0 0 1 12.8 22.4zm-9.33-3.97a4.32 4.32 0 0 1-.52-2.91c.03.02.09.06.13.08l4.6 2.66c.23.14.52.14.76 0l5.62-3.24v2.24a.07.07 0 0 1-.03.06L9.4 20.04a4.34 4.34 0 0 1-5.93-1.6zm-1.21-9.52a4.32 4.32 0 0 1 2.25-1.9v5.48a.75.75 0 0 0 .38.65l5.62 3.24-1.95 1.12a.07.07 0 0 1-.07 0L4.07 14.9A4.34 4.34 0 0 1 2.26 8.9zm16.04 3.73-5.62-3.24 1.95-1.12a.07.07 0 0 1 .07 0l4.43 2.56a4.34 4.34 0 0 1-.67 7.83v-5.48a.75.75 0 0 0-.16-.55zm1.94-2.93c-.03-.02-.09-.06-.13-.08l-4.6-2.65a.76.76 0 0 0-.76 0L9.13 10.2V7.96a.07.07 0 0 1 .03-.06l4.43-2.56a4.34 4.34 0 0 1 6.45 4.49l-.8.81zm-12.18 4-1.95-1.13a.07.07 0 0 1-.04-.05V7.14a4.34 4.34 0 0 1 7.12-3.33c-.03.02-.09.05-.13.07l-4.6 2.66a.76.76 0 0 0-.38.66l-.02 6.5zm1.06-2.28 2.5-1.44 2.5 1.44v2.88l-2.5 1.44-2.5-1.44V12.4z"/>
+              </svg>
+            </div>
+            <div>
+              <div className="brand-name">ChatGPT</div>
+              <div className="brand-sub">OpenAI API</div>
+            </div>
+            {chatgptConnected && <span className="connected-badge">Connected</span>}
+          </div>
+
+          {!chatgptConnected ? (
+            <>
+              <p className="card-desc">Enter your OpenAI API key to route ChatGPT requests through GHST AI.</p>
+              <input
+                className="key-input"
+                type="password"
+                placeholder="sk-..."
+                value={chatgptKey}
+                onChange={e => { setChatgptKey(e.target.value); setChatgptError(""); }}
+                onKeyDown={e => e.key === "Enter" && connectChatGPT()}
+              />
+              {chatgptError && <p className="error-msg">{chatgptError}</p>}
+              <button className="btn btn-openai" onClick={connectChatGPT}>Connect ChatGPT</button>
+              <a className="help-link" href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">
+                Get your API key →
+              </a>
+            </>
+          ) : (
+            <div className="connected-state">
+              <div className="connected-icon">✓</div>
+              <p>ChatGPT is connected and routing through GHST AI.</p>
+              <button className="btn-ghost" onClick={() => { setChatgptConnected(false); setChatgptKey(""); }}>
+                Disconnect
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="nav-section-label">PLATFORM</div>
-        <nav>
-          {NAV.map(n => (
-            <div
-              key={n}
-              className={`nav-item${activeNav === n ? " active" : ""}`}
-              onClick={() => setActiveNav(n)}
-            >
-              <span className="nav-icon">{navIcon(n)}</span>
-              {n}
+        {/* Claude */}
+        <div className={`card ${claudeConnected ? "card-connected" : ""}`}>
+          <div className="card-brand">
+            <div className="brand-icon claude-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.3 2H6.7L2 12l4.7 10h10.6L24 12 17.3 2zM12 16.5c-2.5 0-4.5-2-4.5-4.5S9.5 7.5 12 7.5s4.5 2 4.5 4.5-2 4.5-4.5 4.5z"/>
+              </svg>
             </div>
-          ))}
-        </nav>
+            <div>
+              <div className="brand-name">Claude</div>
+              <div className="brand-sub">Anthropic API</div>
+            </div>
+            {claudeConnected && <span className="connected-badge">Connected</span>}
+          </div>
 
-        <div className="sidebar-footer">
-          <div className="footer-dot" style={{ background: dot }} />
-          <span>System {proxyStatus}</span>
+          {!claudeConnected ? (
+            <>
+              <p className="card-desc">Enter your Anthropic API key to route Claude requests through GHST AI.</p>
+              <input
+                className="key-input"
+                type="password"
+                placeholder="sk-ant-..."
+                value={claudeKey}
+                onChange={e => { setClaudeKey(e.target.value); setClaudeError(""); }}
+                onKeyDown={e => e.key === "Enter" && connectClaude()}
+              />
+              {claudeError && <p className="error-msg">{claudeError}</p>}
+              <button className="btn btn-claude" onClick={connectClaude}>Connect Claude</button>
+              <a className="help-link" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
+                Get your API key →
+              </a>
+            </>
+          ) : (
+            <div className="connected-state">
+              <div className="connected-icon">✓</div>
+              <p>Claude is connected and routing through GHST AI.</p>
+              <button className="btn-ghost" onClick={() => { setClaudeConnected(false); setClaudeKey(""); }}>
+                Disconnect
+              </button>
+            </div>
+          )}
         </div>
-      </aside>
-
-      {/* Main */}
-      <main className="main">
-        <header className="topbar">
-          <div>
-            <h2 className="page-title">{activeNav}</h2>
-            <p className="page-sub">GHST AI Platform &mdash; Control Center</p>
-          </div>
-          <div className="uptime-chip">
-            <span className="uptime-icon">⏱</span>
-            {formatUptime(uptime)}
-          </div>
-        </header>
-
-        {activeNav === "Dashboard" && (
-          <>
-            {/* Status row */}
-            <div className="stat-row">
-              {[
-                { label: "Proxy",     value: proxyStatus.toUpperCase(), color: dot },
-                { label: "Services",  value: "2 / 2",   color: "#00E5A0" },
-                { label: "Uptime",    value: formatUptime(uptime), color: "#7B8CFF" },
-                { label: "Latency",   value: "~12 ms",  color: "#F5A623" },
-              ].map(s => (
-                <div className="stat-card" key={s.label}>
-                  <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
-                  <div className="stat-label">{s.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Services table */}
-            <div className="card">
-              <div className="card-header">
-                <span className="card-title">Running Services</span>
-                <span className="badge">LIVE</span>
-              </div>
-              <table className="service-table">
-                <thead>
-                  <tr>
-                    <th>Service</th>
-                    <th>Type</th>
-                    <th>Port</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.map(svc => (
-                    <tr key={svc.name}>
-                      <td className="svc-name">{svc.name}</td>
-                      <td className="svc-type">{svc.type}</td>
-                      <td className="svc-port">{svc.port}</td>
-                      <td>
-                        <span className="status-pill" style={{ background: (statusColor[svc.status] || "#888") + "22", color: statusColor[svc.status] || "#888" }}>
-                          <span className="pill-dot" style={{ background: statusColor[svc.status] || "#888" }} />
-                          {svc.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Activity log */}
-            <div className="card">
-              <div className="card-header">
-                <span className="card-title">Activity</span>
-              </div>
-              <div className="log-list">
-                <LogLine time="now"   msg="Proxy health check passed" level="ok"   />
-                <LogLine time="-5s"   msg="Dashboard connected to proxy via rewrite" level="ok" />
-                <LogLine time="-10s"  msg="Services started via Docker Compose" level="info" />
-                <LogLine time="-12s"  msg="GHST AI Platform booting…" level="info" />
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeNav !== "Dashboard" && (
-          <div className="card empty-state">
-            <div className="empty-icon">🚧</div>
-            <div className="empty-label">{activeNav} coming soon</div>
-          </div>
-        )}
-      </main>
+      </div>
 
       <style jsx>{`
-        .logo-wrap   { display:flex; align-items:center; gap:10px; margin-bottom:36px; }
-        .logo-img    { width:36px; height:36px; object-fit:contain; border-radius:8px; }
-        .logo-text   { font-size:18px; font-weight:700; letter-spacing:.5px; }
-        .logo-accent { color:#7B8CFF; }
+        .page {
+          min-height: 100vh;
+          background: #0F1115;
+          color: #E6E6E6;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 0 24px 60px;
+        }
 
-        .nav-section-label { font-size:10px; letter-spacing:1.5px; opacity:.35; margin-bottom:10px; }
-        .nav-item    { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
-                       cursor:pointer; opacity:.55; font-size:14px; transition:all .15s; margin-bottom:4px; }
-        .nav-item:hover  { opacity:.85; background:rgba(255,255,255,.04); }
-        .nav-item.active { opacity:1; background:rgba(123,140,255,.12); color:#7B8CFF; }
-        .nav-icon    { font-size:16px; width:20px; text-align:center; }
+        .header {
+          width: 100%;
+          max-width: 860px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 28px 0 0;
+        }
+        .logo {
+          height: 40px;
+          width: auto;
+          object-fit: contain;
+          filter: invert(1);
+        }
+        .status-chip {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 12px;
+          opacity: 0.55;
+          background: rgba(255,255,255,.05);
+          border: 1px solid rgba(255,255,255,.06);
+          border-radius: 20px;
+          padding: 6px 14px;
+        }
+        .status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          display: inline-block;
+        }
 
-        .sidebar-footer { position:absolute; bottom:30px; display:flex; align-items:center; gap:8px;
-                          font-size:12px; opacity:.5; }
-        .footer-dot  { width:7px; height:7px; border-radius:50%; }
+        .hero {
+          text-align: center;
+          padding: 64px 0 48px;
+        }
+        .hero-title {
+          margin: 0 0 12px;
+          font-size: 38px;
+          font-weight: 700;
+          letter-spacing: -0.5px;
+        }
+        .hero-sub {
+          margin: 0;
+          font-size: 16px;
+          opacity: 0.45;
+        }
 
-        .topbar      { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
-        .page-title  { margin:0; font-size:22px; font-weight:700; }
-        .page-sub    { margin:4px 0 0; font-size:13px; opacity:.4; }
-        .uptime-chip { background:#1C1F27; border:1px solid rgba(255,255,255,.07); border-radius:20px;
-                       padding:8px 16px; font-size:13px; font-family:monospace; display:flex; align-items:center; gap:7px; }
-        .uptime-icon { font-size:14px; }
+        .cards {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          width: 100%;
+          max-width: 860px;
+        }
 
-        .stat-row    { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
-        .stat-card   { background:#171A20; border:1px solid rgba(255,255,255,.05); border-radius:12px;
-                       padding:22px 24px; }
-        .stat-value  { font-size:22px; font-weight:700; margin-bottom:6px; font-family:monospace; }
-        .stat-label  { font-size:12px; opacity:.45; letter-spacing:.5px; text-transform:uppercase; }
+        .card {
+          background: #14171C;
+          border: 1px solid rgba(255,255,255,.07);
+          border-radius: 16px;
+          padding: 28px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          transition: border-color .2s;
+        }
+        .card-connected {
+          border-color: rgba(0,229,160,.25);
+        }
 
-        .card        { background:#171A20; border:1px solid rgba(255,255,255,.05); border-radius:14px;
-                       padding:24px; margin-bottom:20px; }
-        .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
-        .card-title  { font-size:14px; font-weight:600; }
-        .badge       { font-size:10px; letter-spacing:1px; background:rgba(0,229,160,.12);
-                       color:#00E5A0; padding:3px 8px; border-radius:20px; }
+        .card-brand {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+        .brand-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .openai-icon { background: #10A37F22; color: #10A37F; }
+        .claude-icon  { background: #D9755922; color: #D97559; }
 
-        .service-table { width:100%; border-collapse:collapse; font-size:13px; }
-        .service-table th { text-align:left; opacity:.35; font-size:11px; letter-spacing:.8px;
-                            text-transform:uppercase; padding-bottom:12px; font-weight:500; }
-        .service-table td { padding:12px 0; border-top:1px solid rgba(255,255,255,.04); }
-        .svc-name    { font-weight:600; }
-        .svc-type    { opacity:.5; font-family:monospace; font-size:12px; }
-        .svc-port    { font-family:monospace; opacity:.6; }
-        .status-pill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
-                       border-radius:20px; font-size:11px; font-weight:600; letter-spacing:.4px; }
-        .pill-dot    { width:6px; height:6px; border-radius:50%; }
+        .brand-name { font-size: 17px; font-weight: 700; }
+        .brand-sub  { font-size: 12px; opacity: 0.4; margin-top: 2px; }
 
-        .log-list    { display:flex; flex-direction:column; gap:10px; }
+        .connected-badge {
+          margin-left: auto;
+          font-size: 11px;
+          font-weight: 600;
+          background: rgba(0,229,160,.12);
+          color: #00E5A0;
+          padding: 4px 10px;
+          border-radius: 20px;
+          letter-spacing: .4px;
+        }
 
-        .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center;
-                       min-height:200px; opacity:.4; }
-        .empty-icon  { font-size:36px; margin-bottom:12px; }
-        .empty-label { font-size:14px; }
+        .card-desc {
+          margin: 0;
+          font-size: 14px;
+          opacity: 0.5;
+          line-height: 1.5;
+        }
+
+        .key-input {
+          width: 100%;
+          background: #0F1115;
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 10px;
+          padding: 12px 14px;
+          font-size: 14px;
+          color: #E6E6E6;
+          font-family: monospace;
+          outline: none;
+          box-sizing: border-box;
+          transition: border-color .15s;
+        }
+        .key-input:focus { border-color: rgba(255,255,255,.25); }
+        .key-input::placeholder { opacity: 0.3; }
+
+        .error-msg {
+          margin: -4px 0 0;
+          font-size: 12px;
+          color: #FF4D4D;
+        }
+
+        .btn {
+          width: 100%;
+          padding: 13px;
+          border: none;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: opacity .15s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-openai { background: #10A37F; color: #fff; }
+        .btn-claude { background: #D97559; color: #fff; }
+
+        .help-link {
+          font-size: 12px;
+          color: inherit;
+          opacity: 0.35;
+          text-decoration: none;
+          text-align: center;
+        }
+        .help-link:hover { opacity: 0.6; }
+
+        .connected-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          padding: 16px 0;
+          text-align: center;
+        }
+        .connected-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(0,229,160,.12);
+          color: #00E5A0;
+          font-size: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .connected-state p { margin: 0; font-size: 14px; opacity: 0.55; }
+
+        .btn-ghost {
+          background: none;
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 8px;
+          padding: 8px 20px;
+          color: #E6E6E6;
+          font-size: 13px;
+          cursor: pointer;
+          opacity: 0.5;
+          transition: opacity .15s;
+        }
+        .btn-ghost:hover { opacity: 0.8; }
+
+        @media (max-width: 600px) {
+          .cards { grid-template-columns: 1fr; }
+          .hero-title { font-size: 28px; }
+        }
       `}</style>
     </div>
   );
-}
-
-function LogLine({ time, msg, level }) {
-  const col = level === "ok" ? "#00E5A0" : "#7B8CFF";
-  return (
-    <div style={{ display:"flex", gap:16, fontSize:13 }}>
-      <span style={{ opacity:.35, fontFamily:"monospace", minWidth:36 }}>{time}</span>
-      <span style={{ width:6, height:6, borderRadius:"50%", background:col, marginTop:5, flexShrink:0 }} />
-      <span style={{ opacity:.75 }}>{msg}</span>
-    </div>
-  );
-}
-
-function navIcon(n) {
-  return { Dashboard:"⬛", Services:"⚙️", Logs:"📋", Settings:"🔧" }[n] || "•";
 }
