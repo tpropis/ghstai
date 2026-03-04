@@ -1,0 +1,22 @@
+{
+  "name": "GHST AI",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" }
+  },
+  "postCreateCommand": "docker compose up --build -d",
+  "forwardPorts": [8080, 5000],
+  "portsAttributes": {
+    "8080": {
+      "label": "Dashboard",
+      "onAutoForward": "openBrowser",
+      "visibility": "public"
+    },
+    "5000": {
+      "label": "Proxy",
+      "visibility": "public"
+    }
+  },
+  "remoteUser": "vscode"
+}

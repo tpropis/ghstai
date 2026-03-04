@@ -101,7 +101,6 @@ export default function Home() {
   }, []);
 
   const handleConnect = (id) => {
-    alert("handleConnect called: " + id);
     const key = keys[id].trim();
     if (!key) { setErrors(e => ({ ...e, [id]: "Please enter your API key" })); return; }
     setErrors(e => ({ ...e, [id]: "" }));
