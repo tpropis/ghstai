@@ -101,10 +101,8 @@ export default function Home() {
   }, []);
 
   const handleConnect = (id) => {
-    const p   = PROVIDERS.find(x => x.id === id);
     const key = keys[id].trim();
     if (!key) { setErrors(e => ({ ...e, [id]: "Please enter your API key" })); return; }
-    if (!p.validate(key)) { setErrors(e => ({ ...e, [id]: `Invalid — ${p.hint}` })); return; }
     setErrors(e => ({ ...e, [id]: "" }));
     setConnected(c => ({ ...c, [id]: true }));
     setScreen("dashboard");
