@@ -133,6 +133,7 @@ export default function Home() {
     if (!p.validate(key)) { setErrors(prev => ({ ...prev, [id]: `Invalid key — ${p.hint}` })); return; }
     setErrors(prev => ({ ...prev, [id]: "" }));
     setConnected(prev => ({ ...prev, [id]: true }));
+    setTab("dashboard");
   };
 
   const handleDisconnect = (id) => {
@@ -311,7 +312,6 @@ export default function Home() {
 
                     {!connected[p.id] ? (
                       <>
-                        <p className="card-desc">Route {p.sub} requests through GHST AI using your API key.</p>
                         <input
                           className="key-input"
                           type="password"
@@ -851,7 +851,6 @@ export default function Home() {
           border-radius: 20px;
           letter-spacing: .3px;
         }
-        .card-desc { margin: 0; font-size: 13px; opacity: 0.42; line-height: 1.55; }
         .key-input {
           width: 100%;
           background: #0A0C10;
