@@ -6,6 +6,7 @@
     "ghcr.io/devcontainers/features/node:1": { "version": "20" }
   },
   "postCreateCommand": "docker compose up --build -d",
+  "postStartCommand": "docker compose up -d",
   "forwardPorts": [8080, 5000],
   "portsAttributes": {
     "8080": {

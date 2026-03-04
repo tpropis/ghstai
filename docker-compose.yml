@@ -17,3 +17,4 @@ services:
       - /app/node_modules
     environment:
       - NEXT_PUBLIC_PROXY_BASE=
+      - PROXY_URL=http://proxy:5000
