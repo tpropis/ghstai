@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Build & start ──────────────────────────────────────────────────────
+      - name: Build and start services
+        run: docker compose up -d --build
+
+      # ── Wait for proxy ─────────────────────────────────────────────────────
+      - name: Wait for proxy (port 5000)
+        run: |
+          echo "Waiting for proxy to be ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5000/api/status > /dev/null 2>&1; then
+              echo "Proxy ready after $((i*2))s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Proxy did not become ready in time"
+          docker compose logs proxy
+          exit 1
+
+      # ── Wait for dashboard ─────────────────────────────────────────────────
+      - name: Wait for dashboard (port 8080)
+        run: |
+          echo "Waiting for dashboard to be ready..."
+          for i in $(seq 1 45); do
+            code=$(curl -so /dev/null -w "%{http_code}" http://localhost:8080 2>/dev/null || echo "000")
+            if [ "$code" = "200" ] || [ "$code" = "304" ]; then
+              echo "Dashboard ready after $((i*2))s (HTTP $code)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Dashboard did not become ready in time"
+          docker compose logs dashboard
+          exit 1
+
+      # ── Generate traffic ───────────────────────────────────────────────────
+      - name: Generate test traffic
+        run: |
+          # Hit a few non-internal paths so the request log has entries
+          curl -sf http://localhost:5000/test/route-a    || true
+          curl -sf http://localhost:5000/test/route-b    || true
+          curl -s  http://localhost:5000/nonexistent     || true
+          sleep 1
+
+      # ── Test proxy endpoints ───────────────────────────────────────────────
+      - name: Test proxy endpoints
+        run: |
+          FAIL=0
+
+          check() {
+            local label="$1" url="$2"
+            body=$(curl -sf "$url" 2>/dev/null)
+            if [ $? -eq 0 ]; then
+              echo "PASS  $label"
+              echo "$body"
+            else
+              echo "FAIL  $label  ->  $url"
+              FAIL=1
+            fi
+          }
+
+          check "GET /api/status"    "http://localhost:5000/api/status"
+          check "GET /api/metrics"   "http://localhost:5000/api/metrics"
+          check "GET /api/logs"      "http://localhost:5000/api/logs?limit=10"
+          check "GET / (root)"       "http://localhost:5000/"
+
+          exit $FAIL
+
+      # ── Test dashboard ─────────────────────────────────────────────────────
+      - name: Test dashboard
+        run: |
+          code=$(curl -so /dev/null -w "%{http_code}" http://localhost:8080)
+          echo "Dashboard HTTP status: $code"
+          if [ "$code" != "200" ] && [ "$code" != "304" ]; then
+            echo "FAIL: expected 200/304, got $code"
+            exit 1
+          fi
+          echo "PASS"
+
+      # ── Dashboard proxies /api/* to proxy ──────────────────────────────────
+      - name: Test dashboard → proxy rewrite
+        run: |
+          body=$(curl -sf http://localhost:8080/api/status)
+          echo "$body"
+          echo "$body" | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          assert d.get('status') == 'healthy', f'unexpected: {d}'
+          print('PASS: /api/status rewrite works')
+          "
+
+      # ── Write shareable job summary ────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## GHST AI — Test Results"
+            echo ""
+            echo "| Service | URL | Status |"
+            echo "|---------|-----|--------|"
+
+            proxy_code=$(curl -so /dev/null -w "%{http_code}" http://localhost:5000/api/status 2>/dev/null || echo "ERR")
+            dash_code=$(curl -so /dev/null -w "%{http_code}" http://localhost:8080 2>/dev/null || echo "ERR")
+
+            [ "$proxy_code" = "200" ] && p_icon="✅" || p_icon="❌"
+            ([ "$dash_code" = "200" ] || [ "$dash_code" = "304" ]) && d_icon="✅" || d_icon="❌"
+
+            echo "| Proxy      | \`http://localhost:5000\` | $p_icon HTTP $proxy_code |"
+            echo "| Dashboard  | \`http://localhost:8080\` | $d_icon HTTP $dash_code  |"
+            echo ""
+
+            echo "### Proxy: \`GET /api/status\`"
+            echo '```json'
+            curl -sf http://localhost:5000/api/status 2>/dev/null | python3 -m json.tool || echo "(unavailable)"
+            echo '```'
+
+            echo "### Proxy: \`GET /api/metrics\`"
+            echo '```json'
+            curl -sf http://localhost:5000/api/metrics 2>/dev/null | python3 -m json.tool || echo "(unavailable)"
+            echo '```'
+
+            echo "### Proxy: \`GET /api/logs?limit=5\`"
+            echo '```json'
+            curl -sf "http://localhost:5000/api/logs?limit=5" 2>/dev/null | python3 -m json.tool || echo "(unavailable)"
+            echo '```'
+
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── Show container logs on failure ─────────────────────────────────────
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose logs
