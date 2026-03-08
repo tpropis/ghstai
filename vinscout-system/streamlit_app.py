@@ -19,13 +19,48 @@ SUPABASE_URL = get_config("SUPABASE_URL")
 SUPABASE_KEY = get_config("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error("SUPABASE_URL and SUPABASE_KEY must be set in Streamlit Secrets or environment variables.")
+    st.set_page_config(page_title="VINScout Setup", layout="centered")
+    st.title("VINScout Setup Required")
+    st.markdown("---")
+    st.markdown("### Your Supabase credentials are not configured yet.")
+    st.markdown("")
+    st.markdown("**If you're on Streamlit Cloud:**")
+    st.markdown(
+        "1. Go to your app at **share.streamlit.io**\n"
+        "2. Click the **3 dots** menu (bottom-right) > **Settings**\n"
+        "3. Click **Secrets** on the left\n"
+        "4. Paste this (replace with your real values):"
+    )
+    st.code(
+        'SUPABASE_URL = "https://YOUR-PROJECT-ID.supabase.co"\n'
+        'SUPABASE_KEY = "eyJhbGciOi..."',
+        language="toml"
+    )
+    st.markdown("5. Click **Save** then **Reboot app**")
+    st.markdown("")
+    st.markdown("**If you're running with Docker:**")
+    st.code(
+        "# Create a .env file next to docker-compose.yml:\n"
+        'SUPABASE_URL=https://YOUR-PROJECT-ID.supabase.co\n'
+        'SUPABASE_KEY=eyJhbGciOi...',
+        language="bash"
+    )
+    st.markdown("")
+    st.markdown("**Where to find your keys:**")
+    st.markdown(
+        "1. Go to **supabase.com/dashboard** > your project\n"
+        "2. Click **Settings** (gear icon) > **API Keys**\n"
+        "3. Copy the **anon / public** key (starts with `eyJ...`)\n"
+        "4. Copy the **Project URL** from the top of the page"
+    )
     st.stop()
 
 try:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
-    st.error(f"DATABASE CONNECTION FAILED: {e}")
+    st.set_page_config(page_title="VINScout Error", layout="centered")
+    st.error(f"Could not connect to Supabase: {e}")
+    st.markdown("Double-check that your `SUPABASE_URL` and `SUPABASE_KEY` are correct.")
     st.stop()
 
 # --- 2. THE DESIGN SYSTEM (HIGH-DENSITY DARK MODE) ---
