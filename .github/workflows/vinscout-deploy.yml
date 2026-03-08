@@ -1,0 +1,49 @@
+name: VINScout Deploy & Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "vinscout-system/**"
+  workflow_dispatch:
+
+jobs:
+  sync-to-vinscout-repo:
+    name: Sync to vinscout-system repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ghstai
+        uses: actions/checkout@v4
+
+      - name: Push to vinscout-system repo
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.VINSCOUT_DEPLOY_TOKEN }}
+        with:
+          source-directory: vinscout-system
+          destination-github-username: tpropis
+          destination-repository-name: vinscout-system
+          target-branch: main
+          commit-message: "auto-sync from ghstai monorepo"
+
+  validate:
+    name: Validate VINScout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r vinscout-system/requirements.txt
+
+      - name: Syntax check
+        run: python -m py_compile vinscout-system/streamlit_app.py && python -m py_compile vinscout-system/hunter.py
+
+      - name: Import check
+        run: |
+          cd vinscout-system
+          python -c "import streamlit; import pandas; import requests; from bs4 import BeautifulSoup; from supabase import create_client; print('All imports OK')"

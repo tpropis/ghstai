@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 from supabase import create_client
@@ -6,13 +7,25 @@ from bs4 import BeautifulSoup
 import time
 import random
 
-# --- 1. SECURE DATABASE CONNECTION (via Streamlit Secrets) ---
+# --- 1. SECURE DATABASE CONNECTION (st.secrets OR env vars) ---
+def get_config(key):
+    """Read from Streamlit secrets first, fall back to env vars (Docker)."""
+    try:
+        return st.secrets[key]
+    except (FileNotFoundError, KeyError):
+        return os.environ.get(key)
+
+SUPABASE_URL = get_config("SUPABASE_URL")
+SUPABASE_KEY = get_config("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    st.error("SUPABASE_URL and SUPABASE_KEY must be set in Streamlit Secrets or environment variables.")
+    st.stop()
+
 try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
-    st.error(f"DATABASE CONNECTION FAILED. Check your Streamlit Secrets configuration. Error: {e}")
+    st.error(f"DATABASE CONNECTION FAILED: {e}")
     st.stop()
 
 # --- 2. THE DESIGN SYSTEM (HIGH-DENSITY DARK MODE) ---
