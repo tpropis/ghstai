@@ -14,27 +14,3 @@ services:
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_PROXY_BASE=
-
-  vinscout:
-    build: ./vinscout-system
-    ports:
-      - "8501:8501"
-    restart: unless-stopped
-    environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  hunter:
-    build: ./vinscout-system
-    entrypoint: ["python", "hunter.py"]
-    restart: "no"
-    environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-    profiles:
-      - hunt
